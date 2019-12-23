@@ -1,93 +1,78 @@
 from __future__ import division
 import  matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
-import sys
 from os.path import expanduser
-import statsmodels.api as sm
-from scipy.stats.kde import gaussian_kde
 
 
-def get_kdens_choose_kernel(_list,kernel):
-    """ Finds the kernel density function across a sample of SADs """
-    density = gaussian_kde(_list)
-    n = len(_list)
-    xs = np.linspace(min(_list), max(_list), n)
-    density.covariance_factor = lambda : kernel
-    density._compute_covariance()
-    D = [xs,density(xs)]
-    return D
 
-
-def figplot(x, xpt, xlab, ylab, fig, n):
+def figplot(cts, xlab, ylab, fig, n, lab, minx):
 
         fs = 8
-        x = x.tolist()
 
-        fig.add_subplot(2, 2, n)
-
-        D = get_kdens_choose_kernel(x, 0.5)
-        plt.plot(D[0],D[1],color = 'k', lw=2, alpha = 0.99)
+        ax = fig.add_subplot(2, 2, n)
+        
+        yls = list()
+        xls = list()
+        xs = range(minx, 51)
+        for x in xs:
+            ct2 = cts.count(x)
+            p = 100*(ct2)/len(cts)
+            #if x == 50: print(p)
+            if p > 0 and x > 40:
+                xls.append(x)
+                yls.append(p)
+            
+            
+        
+        plt.scatter(xls, yls, color = '0.7', linewidths=1, edgecolor='k')
 
         plt.xlabel(xlab, fontsize=fs)
         plt.ylabel(ylab, fontsize=fs)
+        plt.xlim(min(xls)-0.5, 50.5)
         plt.tick_params(axis='both', labelsize=fs)
-        #plt.axvline(xpt, color='k', ls=':', lw=1)
-
+        
+        x1 = list(xls)
+        ax.set_xticks(x1)
+        ax.set_xticklabels(x1, minor=False)
         return fig
 
 
-def figfunction():
-
-    #p, fr, _lw, w, fs, sz = 2, 0.25, 0.5, 1, 6, 4
-    #ws, hs = 0.45, 0.5
-
-    mydir = expanduser("~/GitHub/DormancyDecay")
-
-    mets = ['Bray', 'Dice', 'Canb']
-    fits = [1]
-    for fit in fits:
-        for met in mets:
-            print fit, met
-
-            #if met == 'Bray': xpt = [-0.325, -0.248, -0.182, -0.132]
-            #elif met == 'Dice': xpt = [-0.101, -0.054, -0.052, -0.032]
-            #elif met == 'Canb': xpt = [-0.054, -0.029, -0.028, -0.016]
-
-            df = pd.read_csv(mydir+'/model/ModelData/saved/modelresults_nodispersal.txt')
-            if fit == 1: df = df[df['fit'] == fit]
-
-            print np.mean(df[met+'-ActEnv-m'])#, np.mean(df[met+'-ActEnv-b'])
-            print np.mean(df[met+'-AllEnv-m'])#, np.mean(df[met+'-AllEnv-b'])
-            print np.mean(df[met+'-ActGeo-m'])#, np.mean(df[met+'-ActGeo-b'])
-            print np.mean(df[met+'-AllGeo-m'])#, np.mean(df[met+'-AllGeo-b'])
-            
-            print '\n\n'
-            
-            '''
-            fig = plt.figure()
-            ylab = 'kernel density'
-
-            xlab = 'slope, Act-Env'
-            fig = figplot(df[met+'-ActEnv-m'], xpt[0], xlab, ylab, fig, 1)
-
-            xlab = 'slope, All-Env'
-            fig = figplot(df[met+'-AllEnv-m'], xpt[1], xlab, ylab, fig, 2)
-
-            xlab = 'slope, Act-Geo'
-            fig = figplot(df[met+'-ActGeo-m'], xpt[2], xlab, ylab, fig, 3)
-
-            xlab = 'slope, All-Geo'
-            fig = figplot(df[met+'-AllGeo-m'], xpt[3], xlab, ylab, fig, 4)
 
 
-            #### Final Format and Save #####################################################
-            plt.subplots_adjust(wspace=ws, hspace=hs)
-            if fit == 0: plt.savefig(mydir+'/figs/FromSims/'+met+'-kdens.png', dpi=200, bbox_inches = "tight")
-            elif fit == 1: plt.savefig(mydir+'/figs/FromSims/'+met+'-kdens-fit.png', dpi=200, bbox_inches = "tight")
-            plt.close()
-            '''
+#p, fr, _lw, w, fs, sz = 2, 0.25, 0.5, 1, 6, 4
+ws, hs = 0.45, 0.5
+
+mydir = expanduser("~/GitHub/DormancyDecay")
+
+df = pd.read_csv(mydir+'/model/ModelData/modelresults-numfit.txt')
+fig = plt.figure()
+
+xlab = 'No. aspects reproduced\nfrom empirical data'
 
 
+ylab = '% of models that\ninclude dispersal'
+df2 = df[df['disperse'] == 1]
+x = df2['numfits'].tolist()
+minx = min(x)
+lab = 'With dispersal'
+fig = figplot(x, xlab, ylab, fig, 1, lab, minx)
 
-figfunction()
+
+ylab = '% of models that\nexclude dispersal'
+df2 = df[df['disperse'] == 0]
+x = df2['numfits'].tolist()
+minx = min(x)
+lab = 'No dispersal'
+fig = figplot(x, xlab, ylab, fig, 2, lab, minx)
+
+
+f1 = df[df['numfits'] == 50]
+f2 = len(f1[f1['disperse'] == 0])
+print(100*f2/len(f1), '% of fit models had no dispersal')
+
+print(100*len(f1)/len(df), '% of total models that were fit')
+
+#### Final Format and Save #####################################################
+plt.subplots_adjust(wspace=ws, hspace=hs)
+plt.savefig(mydir+'/figs/FromSims/kdens.png', dpi=400, bbox_inches = "tight")
+plt.close()

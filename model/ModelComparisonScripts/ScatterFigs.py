@@ -4,20 +4,23 @@ import pandas as pd
 import numpy as np
 #import sys
 from os.path import expanduser
-#import statsmodels.api as sm
 
 
 def xfrm(X, _max): return _max-np.array(X)
 
-def figplot(dat, y, x, seed, xlab, ylab, fig, fit, n):
+def figplot(dat, y, x, seed, xlab, ylab, fig, fit, disp, n):
 
-    fs, sz = 8, 1
-    a = 1.0
+    fs = 8
+    if disp == 0: 
+        sz = 0.1
+    else:
+        sz = 0.1
+    a = 1
 
     e = max(seed)
     dat = dat.tolist()
     y = y.tolist()
-    #x = x**2
+    
     x = x.tolist()
     seed = seed.tolist()
 
@@ -26,7 +29,7 @@ def figplot(dat, y, x, seed, xlab, ylab, fig, fit, n):
     clrs = []
 
     for i, val in enumerate(dat):
-        sd = seed[i]
+        sd = seed[i]    
         clr = str()
         if sd <= e*0.3: clr = 'red'
         elif sd < e*0.4: clr = 'orange'
@@ -52,23 +55,11 @@ def figfunction(met1, met2, fname, disp, label):
     mydir = expanduser("~/GitHub/DormancyDecay")
 
     fit = 1
-    df = pd.read_csv(mydir+'/model/ModelData/modelresults.txt')
-    
-    #i_ls = list(set(df['Sim']))
-    #print(max(i_ls))
-    #sys.exit()
-    
+    df = pd.read_csv(mydir+'/model/ModelData/modelresults-numfit.txt')    
     df = df[df['disperse'] == disp]
     
-    tot = df.shape[0]
     df = df[df['fit'] == 1]
-    fits = df.shape[0]
     
-    if met1 == 'bray' and disp == 0:
-        print('No dispersal:', 100*fits/tot)
-    elif met1 == 'bray' and disp == 1:
-        print('Dispersal:', 100*fits/tot)
-        
     fig = plt.figure()
 
     if met2 == 'p_err': ylab = 'Percent error'
@@ -79,7 +70,7 @@ def figfunction(met1, met2, fname, disp, label):
     
     
     if label == 'avg':
-        y = df[met1 + '_' + labels[0] + '-' + met2]
+        y = df[met1 + '_' + 'e_actslope' + '-' + met2]
         labels2 = ['e_allslope','g_actslope','g_allslope']
         for l in labels2:
             y += df[met1 + '_' + l + '-' + met2]
@@ -88,23 +79,21 @@ def figfunction(met1, met2, fname, disp, label):
         y = df[met1 + '_' + label + '-' + met2]
         
         
-    fig = figplot(df['fit'], y, df['env_r'], df['env_r'], xlab, ylab, fig, fit, 1)
+    fig = figplot(df['fit'], y, df['env_r'], df['env_r'], xlab, ylab, fig, fit, disp, 1)
 
     xlab = 'Dormant death'
-    fig = figplot(df['fit'], y, df['dded'], df['env_r'], xlab, ylab, fig, fit, 2)
+    fig = figplot(df['fit'], y, df['dded'], df['env_r'], xlab, ylab, fig, fit, disp, 2)
 
     if disp == 1:
         xlab = 'Active dispersal'
-        fig = figplot(df['fit'], y, df['ad_s'], df['env_r'], xlab, ylab, fig, fit, 3)
+        fig = figplot(df['fit'], y, df['ad_s'], df['env_r'], xlab, ylab, fig, fit, disp, 3)
 
         xlab = 'Dormant dispersal'
-        fig = figplot(df['fit'], y, df['dd_s'], df['env_r'], xlab, ylab, fig, fit, 4)
+        fig = figplot(df['fit'], y, df['dd_s'], df['env_r'], xlab, ylab, fig, fit, disp, 4)
         
         
     #### Final Format and Save #####################################################
     plt.subplots_adjust(wspace=ws, hspace=hs)
-    #plt.savefig(mydir+'/figs/FromSims/m1/'+label+'/'+met1+'-'+met2+fname+'.png',
-    #   dpi=400, bbox_inches = "tight")
     
     plt.savefig(mydir+'/figs/FromSims/temp/'+label+'/'+met1+'-'+met2+fname+'.png',
         dpi=400, bbox_inches = "tight")
@@ -113,8 +102,25 @@ def figfunction(met1, met2, fname, disp, label):
 
     
 
+for i in range(2):
+    mydir = expanduser("~/GitHub/DormancyDecay")
+    df = pd.read_csv(mydir+'/model/ModelData/modelresults-numfit.txt')
+    df = df[df['disperse'] == i]
+    
+    tot = df.shape[0]
+    df = df[df['fit'] == 1]
+    fits = df.shape[0]
+    
+    if i == 0:
+        print('No dispersal:', 100*fits/tot)
+    elif i == 1:
+        print('Dispersal:', 100*fits/tot)
+        
+    print('AvgAct:', np.mean(df['avgAct']), 'AvgAll', np.mean(df['avgAll']))
+    print('Sact:', np.mean(df['Sact']), 'Sall:', np.mean(df['Sall']),'\n')
 
 
+    
 
 fnames = ['_no-dispersal', '_dispersal']
 disperse = [0, 1]
@@ -123,6 +129,7 @@ metrics1 = ['bray', 'sore', 'canb']
 metrics2 = ['p_err']
 
 labels = ['e_actslope','e_allslope','g_actslope','g_allslope','avg']
+#labels = ['avg']
 for label in labels:
     for i, fname in enumerate(fnames):
         for met1 in metrics1:

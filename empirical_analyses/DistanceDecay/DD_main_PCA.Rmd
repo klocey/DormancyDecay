@@ -14,7 +14,7 @@ setwd("~/GitHub/DormancyDecay/empirical_analyses/DistanceDecay")
 # Load packages
 #install.packages('simba', dependencies = TRUE)
 require("simba")
-#install.packages("fossil")
+#install.packages("fossil", dependencies = TRUE, type="source")
 require("fossil")
 ```
 
@@ -53,17 +53,19 @@ act.com <- act.com[ , colSums(act.com) > 0]
 all.com <- all.com[ , colSums(all.com) > 0]
 
 # Use relative abundance
-#act.com <- sweep(act.com, 1, rowSums(act.com), '/')
-#all.com <- sweep(all.com, 1, rowSums(all.com), '/')
+act.com <- sweep(act.com, 1, rowSums(act.com), '/')
+all.com <- sweep(all.com, 1, rowSums(all.com), '/')
 ```
 
 ```{r}
-rowMeans(act.com)
+#rowMeans(act.com)
 max(act.com)
 max(all.com)
-rowMeans(all.com)
+#rowMeans(all.com)
 mean(rowSums(act.com != 0))#/21568
+sd(rowSums(act.com != 0))
 mean(rowSums(all.com != 0))#/27466
+sd(rowSums(all.com != 0))
 ```
 
 
